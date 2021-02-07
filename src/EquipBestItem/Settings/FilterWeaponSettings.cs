@@ -1,17 +1,41 @@
-﻿namespace EquipBestItem
+﻿using System;
+using TaleWorlds.SaveSystem;
+
+namespace EquipBestItem
 {
+    [Serializable]
+    [SaveableClass(0)]
     public class FilterWeaponSettings
     {
+        [SaveableProperty(0)]
         public float MaxDataValue { get; set; } = 1f;
+        [SaveableProperty(0)]
         public float ThrustSpeed { get; set; } = 1f;
+        [SaveableProperty(0)]
         public float SwingSpeed { get; set; } = 1f;
+
+        [SaveableProperty(0)]
         public float MissileSpeed { get; set; } = 1f;
+
+        [SaveableProperty(0)]
         public float WeaponLength { get; set; } = 1f;
+
+        [SaveableProperty(0)]
         public float ThrustDamage { get; set; } = 1f;
+
+        [SaveableProperty(0)]
         public float SwingDamage { get; set; } = 1f;
+
+        [SaveableProperty(0)]
         public float Accuracy { get; set; } = 1f;
+
+        [SaveableProperty(0)]
         public float Handling { get; set; } = 1f;
+
+        [SaveableProperty(0)]
         public float WeaponWeight { get; set; } = 0f;
+
+        [SaveableProperty(0)]
         public float WeaponBodyArmor { get; set; } = 1f;
 
         //public DamageTypes SwingDamageType { get; set; } = 0;

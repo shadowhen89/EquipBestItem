@@ -1,4 +1,5 @@
-﻿using TaleWorlds.Engine.GauntletUI;
+﻿using System.Collections.Generic;
+using TaleWorlds.Engine.GauntletUI;
 
 namespace EquipBestItem.Layers
 {
@@ -6,10 +7,9 @@ namespace EquipBestItem.Layers
     {
         private FilterViewModel _viewModel;
 
-
-        public FilterLayer(int localOrder, string categoryId = "GauntletLayer") : base(localOrder, categoryId)
+        public FilterLayer(int localOrder, List<BetterCharacterSettings> characterSettings, string categoryId = "GauntletLayer") : base(localOrder, categoryId)
         {
-            _viewModel = new FilterViewModel();
+            _viewModel = new FilterViewModel(characterSettings);
 
             this.LoadMovie("FiltersLayer", this._viewModel);
         }

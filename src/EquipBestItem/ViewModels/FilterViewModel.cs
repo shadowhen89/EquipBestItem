@@ -1,11 +1,12 @@
-﻿using TaleWorlds.Core;
+﻿using System.Collections.Generic;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 
 namespace EquipBestItem
 {
     class FilterViewModel : ViewModel
     {
-        public CharacterSettings CharacterSettings;
+        public BetterCharacterSettings CharacterSettings;
 
         public static int CurrentSlot = 0;
 
@@ -15,9 +16,12 @@ namespace EquipBestItem
         private FilterArmorSettings _clipboardFilterArmorSettings;
         private FilterWeaponSettings _clipboardFilterWeaponSettings;
         private FilterMountSettings _clipboardFilterMountSettings;
-        private CharacterSettings _clipboardCharacterSettings;
+        private BetterCharacterSettings _clipboardCharacterSettings;
 
         private bool _pastedCharacterSettings = false;
+        private bool _isCivilian;
+
+        private List<BetterCharacterSettings> _characterSettingsStore;
 
         #region DataSourcePropertys
         private bool _isHelmFilterSelected;
@@ -867,9 +871,9 @@ namespace EquipBestItem
         }
         #endregion DataSourceProperties
 
-        public FilterViewModel()
+        public FilterViewModel(List<BetterCharacterSettings> characterSettings)
         {
-            this.RefreshValues();
+            _characterSettingsStore = characterSettings;
         }
 
         public override void RefreshValues()
@@ -877,13 +881,15 @@ namespace EquipBestItem
             base.RefreshValues();
             try
             {
+                string tempName = InventoryBehavior.Inventory.CurrentCharacterName;
                 if (!_pastedCharacterSettings)
                 {
-                    this.CharacterSettings = SettingsLoader.Instance.GetCharacterSettingsByName(InventoryBehavior.Inventory.CurrentCharacterName);
+                    this.CharacterSettings = BetterCharacterSettings.GetCharacterSettingsByName(_characterSettingsStore, tempName);
                 }
                 else
                 {
-                    SettingsLoader.Instance.SetCharacterSettingsByName(CharacterSettings, InventoryBehavior.Inventory.CurrentCharacterName);
+                    //SettingsLoader.Instance.SetCharacterSettingsByName(CharacterSettings, InventoryBehavior.Inventory.CurrentCharacterName);
+                    BetterCharacterSettings.SetCharacterSettingsByName(_characterSettingsStore, CharacterSettings, tempName);
                     _pastedCharacterSettings = false;
                 }
             }
@@ -924,158 +930,180 @@ namespace EquipBestItem
             if (!IsMountSlotHidden)
                 this.Title = "Mount " + "filter";
 
+            // Allows us to get items depending on the civilian or war set
+            _isCivilian = !InventoryBehavior.Inventory.IsInWarSet;
+            var isCivilian = _isCivilian;
+
             if (!IsWeaponSlotHidden)
             {
-                this.Accuracy = this.CharacterSettings.FilterWeapon[CurrentSlot].Accuracy.ToString();
-                this.WeaponBodyArmor = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponBodyArmor.ToString();
-                this.Handling = this.CharacterSettings.FilterWeapon[CurrentSlot].Handling.ToString();
-                this.MaxDataValue = this.CharacterSettings.FilterWeapon[CurrentSlot].MaxDataValue.ToString();
-                this.MissileSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].MissileSpeed.ToString();
-                this.SwingDamage = this.CharacterSettings.FilterWeapon[CurrentSlot].SwingDamage.ToString();
-                this.SwingSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].SwingSpeed.ToString();
-                this.ThrustDamage = this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustDamage.ToString();
-                this.ThrustSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustSpeed.ToString();
-                this.WeaponLength = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponLength.ToString();
-                this.WeaponWeight = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponWeight.ToString();
+                var filterWeapon = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, isCivilian);
+
+                this.Accuracy = filterWeapon.Accuracy.ToString();
+                this.WeaponBodyArmor = filterWeapon.WeaponBodyArmor.ToString();
+                this.Handling = filterWeapon.Handling.ToString();
+                this.MaxDataValue = filterWeapon.MaxDataValue.ToString();
+                this.MissileSpeed = filterWeapon.MissileSpeed.ToString();
+                this.SwingDamage = filterWeapon.SwingDamage.ToString();
+                this.SwingSpeed = filterWeapon.SwingSpeed.ToString();
+                this.ThrustDamage = filterWeapon.ThrustDamage.ToString();
+                this.ThrustSpeed = filterWeapon.ThrustSpeed.ToString();
+                this.WeaponLength = filterWeapon.WeaponLength.ToString();
+                this.WeaponWeight = filterWeapon.WeaponWeight.ToString();
             }
 
             if (!IsArmorSlotHidden)
             {
-                this.HeadArmor = this.CharacterSettings.FilterArmor[CurrentSlot].HeadArmor.ToString();
-                this.ArmorBodyArmor = this.CharacterSettings.FilterArmor[CurrentSlot].ArmorBodyArmor.ToString();
-                this.LegArmor = this.CharacterSettings.FilterArmor[CurrentSlot].LegArmor.ToString();
-                this.ArmArmor = this.CharacterSettings.FilterArmor[CurrentSlot].ArmArmor.ToString();
-                this.ManeuverBonus = this.CharacterSettings.FilterArmor[CurrentSlot].ManeuverBonus.ToString();
-                this.SpeedBonus = this.CharacterSettings.FilterArmor[CurrentSlot].SpeedBonus.ToString();
-                this.ChargeBonus = this.CharacterSettings.FilterArmor[CurrentSlot].ChargeBonus.ToString();
-                this.ArmorWeight = this.CharacterSettings.FilterArmor[CurrentSlot].ArmorWeight.ToString();
+                var filterArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, isCivilian);
+
+                this.HeadArmor = filterArmor.HeadArmor.ToString();
+                this.ArmorBodyArmor = filterArmor.ArmorBodyArmor.ToString();
+                this.LegArmor = filterArmor.LegArmor.ToString();
+                this.ArmArmor = filterArmor.ArmArmor.ToString();
+                this.ManeuverBonus = filterArmor.ManeuverBonus.ToString();
+                this.SpeedBonus = filterArmor.SpeedBonus.ToString();
+                this.ChargeBonus = filterArmor.ChargeBonus.ToString();
+                this.ArmorWeight = filterArmor.ArmorWeight.ToString();
             }
 
             if (!IsMountSlotHidden)
             {
-                this.ChargeDamage = this.CharacterSettings.FilterMount.ChargeDamage.ToString();
-                this.HitPoints = this.CharacterSettings.FilterMount.HitPoints.ToString();
-                this.Maneuver = this.CharacterSettings.FilterMount.Maneuver.ToString();
-                this.Speed = this.CharacterSettings.FilterMount.Speed.ToString();
+                var filterMount = CharacterSettings.GetMountSettings(isCivilian);
+
+                this.ChargeDamage = filterMount.ChargeDamage.ToString();
+                this.HitPoints = filterMount.HitPoints.ToString();
+                this.Maneuver = filterMount.Maneuver.ToString();
+                this.Speed = filterMount.Speed.ToString();
             }
 
+            var helmArmor = CharacterSettings.GetArmorSettings(ArmorSlot.Helm, isCivilian);
+            var cloakArmor = CharacterSettings.GetArmorSettings(ArmorSlot.Cloak, isCivilian);
+            var bodyArmor = CharacterSettings.GetArmorSettings(ArmorSlot.Armor, isCivilian);
+            var gloveArmor = CharacterSettings.GetArmorSettings(ArmorSlot.Glove, isCivilian);
+            var bootArmor = CharacterSettings.GetArmorSettings(ArmorSlot.Boot, isCivilian);
+            var mount = CharacterSettings.GetMountSettings(isCivilian);
+            var mountArmor = CharacterSettings.GetArmorSettings(ArmorSlot.Harness);
+            var weapon1 = CharacterSettings.GetWeaponSettings(WeaponSlot.Weapon1, isCivilian);
+            var weapon2 = CharacterSettings.GetWeaponSettings(WeaponSlot.Weapon2, isCivilian);
+            var weapon3 = CharacterSettings.GetWeaponSettings(WeaponSlot.Weapon3, isCivilian);
+            var weapon4 = CharacterSettings.GetWeaponSettings(WeaponSlot.Weapon4, isCivilian);
+
             //Helmet icon state
-            if (this.CharacterSettings.FilterArmor[0].ThisFilterNotDefault())
+            if (helmArmor.ThisFilterNotDefault())
                 this.IsHelmFilterSelected = true;
             else
                 this.IsHelmFilterSelected = false;
 
-            if (this.CharacterSettings.FilterArmor[0].ThisFilterLocked())
+            if (helmArmor.ThisFilterLocked())
                 this.IsHelmFilterLocked = true;
             else
                 this.IsHelmFilterLocked = false;
 
             //Cloak icon state
-            if (this.CharacterSettings.FilterArmor[1].ThisFilterNotDefault())
+            if (cloakArmor.ThisFilterNotDefault())
                 this.IsCloakFilterSelected = true;
             else
                 this.IsCloakFilterSelected = false;
 
-            if (this.CharacterSettings.FilterArmor[1].ThisFilterLocked())
+            if (cloakArmor.ThisFilterLocked())
                 this.IsCloakFilterLocked = true;
             else
                 this.IsCloakFilterLocked = false;
 
             //Armor icon state
-            if (this.CharacterSettings.FilterArmor[2].ThisFilterNotDefault())
+            if (bodyArmor.ThisFilterNotDefault())
                 this.IsArmorFilterSelected = true;
             else
                 this.IsArmorFilterSelected = false;
 
-            if (this.CharacterSettings.FilterArmor[2].ThisFilterLocked())
+            if (bodyArmor.ThisFilterLocked())
                 this.IsArmorFilterLocked = true;
             else
                 this.IsArmorFilterLocked = false;
 
             //Gloves icon state
-            if (this.CharacterSettings.FilterArmor[3].ThisFilterNotDefault())
+            if (gloveArmor.ThisFilterNotDefault())
                 this.IsGloveFilterSelected = true;
             else
                 this.IsGloveFilterSelected = false;
 
-            if (this.CharacterSettings.FilterArmor[3].ThisFilterLocked())
+            if (gloveArmor.ThisFilterLocked())
                 this.IsGloveFilterLocked = true;
             else
                 this.IsGloveFilterLocked = false;
 
             //Boots icon state
-            if (this.CharacterSettings.FilterArmor[4].ThisFilterNotDefault())
+            if (bootArmor.ThisFilterNotDefault())
                 this.IsBootFilterSelected = true;
             else
                 this.IsBootFilterSelected = false;
 
-            if (this.CharacterSettings.FilterArmor[4].ThisFilterLocked())
+            if (bootArmor.ThisFilterLocked())
                 this.IsBootFilterLocked = true;
             else
                 this.IsBootFilterLocked = false;
 
             //Mount icon state
-            if (this.CharacterSettings.FilterMount.ThisFilterNotDefault())
+            if (mount.ThisFilterNotDefault())
                 this.IsMountFilterSelected = true;
             else
                 this.IsMountFilterSelected = false;
 
-            if (this.CharacterSettings.FilterMount.ThisFilterLocked())
+            if (mount.ThisFilterLocked())
                 this.IsMountFilterLocked = true;
             else
                 this.IsMountFilterLocked = false;
 
             //Harness icon state
-            if (this.CharacterSettings.FilterArmor[5].ThisFilterNotDefault())
+            if (mountArmor.ThisFilterNotDefault())
                 this.IsHarnessFilterSelected = true;
             else
                 this.IsHarnessFilterSelected = false;
 
-            if (this.CharacterSettings.FilterArmor[5].ThisFilterLocked())
+            if (mountArmor.ThisFilterLocked())
                 this.IsHarnessFilterLocked = true;
             else
                 this.IsHarnessFilterLocked = false;
 
             //Weapon1 icon state
-            if (this.CharacterSettings.FilterWeapon[0].ThisFilterNotDefault())
+            if (weapon1.ThisFilterNotDefault())
                 this.IsWeapon1FilterSelected = true;
             else
                 this.IsWeapon1FilterSelected = false;
 
-            if (this.CharacterSettings.FilterWeapon[0].ThisFilterLocked())
+            if (weapon1.ThisFilterLocked())
                 this.IsWeapon1FilterLocked = true;
             else
                 this.IsWeapon1FilterLocked = false;
 
             //Weapon2 icon state
-            if (this.CharacterSettings.FilterWeapon[1].ThisFilterNotDefault())
+            if (weapon2.ThisFilterNotDefault())
                 this.IsWeapon2FilterSelected = true;
             else
                 this.IsWeapon2FilterSelected = false;
 
-            if (this.CharacterSettings.FilterWeapon[1].ThisFilterLocked())
+            if (weapon2.ThisFilterLocked())
                 this.IsWeapon2FilterLocked = true;
             else
                 this.IsWeapon2FilterLocked = false;
 
             //Weapon3 icon state
-            if (this.CharacterSettings.FilterWeapon[2].ThisFilterNotDefault())
+            if (weapon3.ThisFilterNotDefault())
                 this.IsWeapon3FilterSelected = true;
             else
                 this.IsWeapon3FilterSelected = false;
 
-            if (this.CharacterSettings.FilterWeapon[2].ThisFilterLocked())
+            if (weapon3.ThisFilterLocked())
                 this.IsWeapon3FilterLocked = true;
             else
                 this.IsWeapon3FilterLocked = false;
 
             //Weapon4 icon state
-            if (this.CharacterSettings.FilterWeapon[3].ThisFilterNotDefault())
+            if (weapon4.ThisFilterNotDefault())
                 this.IsWeapon4FilterSelected = true;
             else
                 this.IsWeapon4FilterSelected = false;
 
-            if (this.CharacterSettings.FilterWeapon[3].ThisFilterLocked())
+            if (weapon4.ThisFilterLocked())
                 this.IsWeapon4FilterLocked = true;
             else
                 this.IsWeapon4FilterLocked = false;
@@ -1087,301 +1115,301 @@ namespace EquipBestItem
         #region ExecuteMethods
         public void ExecuteSwingDamagePrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingDamage -= 1f;
-            SwingDamage = this.CharacterSettings.FilterWeapon[CurrentSlot].SwingDamage.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingDamage -= 1f;
+            SwingDamage = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingDamage.ToString();
             this.RefreshValues();
         }
         public void ExecuteSwingDamageNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingDamage += 1f;
-            SwingDamage = this.CharacterSettings.FilterWeapon[CurrentSlot].SwingDamage.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingDamage += 1f;
+            SwingDamage = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingDamage.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteSwingSpeedPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingSpeed -= 1f;
-            SwingSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].SwingSpeed.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingSpeed -= 1f;
+            SwingSpeed = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingSpeed.ToString();
             this.RefreshValues();
         }
         public void ExecuteSwingSpeedNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingSpeed += 1f;
-            SwingSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].SwingSpeed.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingSpeed += 1f;
+            SwingSpeed = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).SwingSpeed.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteThrustDamagePrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustDamage -= 1f;
-            ThrustDamage = this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustDamage.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustDamage -= 1f;
+            ThrustDamage = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustDamage.ToString();
             this.RefreshValues();
         }
         public void ExecuteThrustDamageNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustDamage += 1f;
-            ThrustDamage = this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustDamage.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustDamage += 1f;
+            ThrustDamage = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustDamage.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteThrustSpeedPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustSpeed -= 1f;
-            ThrustSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustSpeed.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustSpeed -= 1f;
+            ThrustSpeed = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustSpeed.ToString();
             this.RefreshValues();
         }
         public void ExecuteThrustSpeedNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustSpeed += 1f;
-            ThrustSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustSpeed.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustSpeed += 1f;
+            ThrustSpeed = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).ThrustSpeed.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteWeaponLengthPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponLength -= 1f;
-            WeaponLength = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponLength.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponLength -= 1f;
+            WeaponLength = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponLength.ToString();
             this.RefreshValues();
         }
         public void ExecuteWeaponLengthNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponLength += 1f;
-            WeaponLength = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponLength.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponLength += 1f;
+            WeaponLength = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponLength.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteHandlingPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Handling -= 1f;
-            Handling = this.CharacterSettings.FilterWeapon[CurrentSlot].Handling.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Handling -= 1f;
+            Handling = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Handling.ToString();
             this.RefreshValues();
         }
         public void ExecuteHandlingNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Handling += 1f;
-            Handling = this.CharacterSettings.FilterWeapon[CurrentSlot].Handling.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Handling += 1f;
+            Handling = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Handling.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteWeaponWeightPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponWeight -= 1f;
-            WeaponWeight = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponWeight.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponWeight -= 1f;
+            WeaponWeight = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponWeight.ToString();
             this.RefreshValues();
         }
         public void ExecuteWeaponWeightNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponWeight += 1f;
-            WeaponWeight = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponWeight.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponWeight += 1f;
+            WeaponWeight = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponWeight.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteMissileSpeedPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MissileSpeed -= 1f;
-            MissileSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].MissileSpeed.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MissileSpeed -= 1f;
+            MissileSpeed = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MissileSpeed.ToString();
             this.RefreshValues();
         }
         public void ExecuteMissileSpeedNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MissileSpeed += 1f;
-            MissileSpeed = this.CharacterSettings.FilterWeapon[CurrentSlot].MissileSpeed.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MissileSpeed += 1f;
+            MissileSpeed = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MissileSpeed.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteAccuracyPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Accuracy -= 1f;
-            Accuracy = this.CharacterSettings.FilterWeapon[CurrentSlot].Accuracy.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Accuracy -= 1f;
+            Accuracy = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Accuracy.ToString();
             this.RefreshValues();
         }
         public void ExecuteAccuracyNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Accuracy += 1f;
-            Accuracy = this.CharacterSettings.FilterWeapon[CurrentSlot].Accuracy.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Accuracy += 1f;
+            Accuracy = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).Accuracy.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteWeaponBodyArmorPrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponBodyArmor -= 1f;
-            WeaponBodyArmor = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponBodyArmor.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponBodyArmor -= 1f;
+            WeaponBodyArmor = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponBodyArmor.ToString();
             this.RefreshValues();
         }
         public void ExecuteWeaponBodyArmorNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponBodyArmor += 1f;
-            WeaponBodyArmor = this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponBodyArmor.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponBodyArmor += 1f;
+            WeaponBodyArmor = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).WeaponBodyArmor.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteMaxDataValuePrev()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MaxDataValue -= 1f;
-            MaxDataValue = this.CharacterSettings.FilterWeapon[CurrentSlot].MaxDataValue.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MaxDataValue -= 1f;
+            MaxDataValue = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MaxDataValue.ToString();
             this.RefreshValues();
         }
         public void ExecuteMaxDataValueNext()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MaxDataValue += 1f;
-            MaxDataValue = this.CharacterSettings.FilterWeapon[CurrentSlot].MaxDataValue.ToString();
+            CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MaxDataValue += 1f;
+            MaxDataValue = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian).MaxDataValue.ToString();
             this.RefreshValues();
         }
 
 
         public void ExecuteHeadArmorPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].HeadArmor -= 1f;
-            HeadArmor = this.CharacterSettings.FilterArmor[CurrentSlot].HeadArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).HeadArmor -= 1f;
+            HeadArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).HeadArmor.ToString();
             this.RefreshValues();
         }
         public void ExecuteHeadArmorNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].HeadArmor += 1f;
-            HeadArmor = this.CharacterSettings.FilterArmor[CurrentSlot].HeadArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).HeadArmor += 1f;
+            HeadArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).HeadArmor.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteArmorBodyArmorPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorBodyArmor -= 1f;
-            ArmorBodyArmor = this.CharacterSettings.FilterArmor[CurrentSlot].ArmorBodyArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorBodyArmor -= 1f;
+            ArmorBodyArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorBodyArmor.ToString();
             this.RefreshValues();
         }
         public void ExecuteArmorBodyArmorNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorBodyArmor += 1f;
-            ArmorBodyArmor = this.CharacterSettings.FilterArmor[CurrentSlot].ArmorBodyArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorBodyArmor += 1f;
+            ArmorBodyArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorBodyArmor.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteLegArmorPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].LegArmor -= 1f;
-            LegArmor = this.CharacterSettings.FilterArmor[CurrentSlot].LegArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).LegArmor -= 1f;
+            LegArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).LegArmor.ToString();
             this.RefreshValues();
         }
         public void ExecuteLegArmorNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].LegArmor += 1f;
-            LegArmor = this.CharacterSettings.FilterArmor[CurrentSlot].LegArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).LegArmor += 1f;
+            LegArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).LegArmor.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteArmArmorPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmArmor -= 1f;
-            ArmArmor = this.CharacterSettings.FilterArmor[CurrentSlot].ArmArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmArmor -= 1f;
+            ArmArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmArmor.ToString();
             this.RefreshValues();
         }
         public void ExecuteArmArmorNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmArmor += 1f;
-            ArmArmor = this.CharacterSettings.FilterArmor[CurrentSlot].ArmArmor.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmArmor += 1f;
+            ArmArmor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmArmor.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteManeuverBonusPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ManeuverBonus -= 1f;
-            ManeuverBonus = this.CharacterSettings.FilterArmor[CurrentSlot].ManeuverBonus.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ManeuverBonus -= 1f;
+            ManeuverBonus = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ManeuverBonus.ToString();
             this.RefreshValues();
         }
         public void ExecuteManeuverBonusNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ManeuverBonus += 1f;
-            ManeuverBonus = this.CharacterSettings.FilterArmor[CurrentSlot].ManeuverBonus.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ManeuverBonus += 1f;
+            ManeuverBonus = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ManeuverBonus.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteSpeedBonusPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].SpeedBonus -= 1f;
-            SpeedBonus = this.CharacterSettings.FilterArmor[CurrentSlot].SpeedBonus.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).SpeedBonus -= 1f;
+            SpeedBonus = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).SpeedBonus.ToString();
             this.RefreshValues();
         }
         public void ExecuteSpeedBonusNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].SpeedBonus += 1f;
-            SpeedBonus = this.CharacterSettings.FilterArmor[CurrentSlot].SpeedBonus.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).SpeedBonus += 1f;
+            SpeedBonus = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).SpeedBonus.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteChargeBonusPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ChargeBonus -= 1f;
-            ChargeBonus = this.CharacterSettings.FilterArmor[CurrentSlot].ChargeBonus.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ChargeBonus -= 1f;
+            ChargeBonus = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ChargeBonus.ToString();
             this.RefreshValues();
         }
         public void ExecuteChargeBonusNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ChargeBonus += 1f;
-            ChargeBonus = this.CharacterSettings.FilterArmor[CurrentSlot].ChargeBonus.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ChargeBonus += 1f;
+            ChargeBonus = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ChargeBonus.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteArmorWeightPrev()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorWeight -= 1f;
-            ArmorWeight = this.CharacterSettings.FilterArmor[CurrentSlot].ArmorWeight.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorWeight -= 1f;
+            ArmorWeight = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorWeight.ToString();
             this.RefreshValues();
         }
         public void ExecuteArmorWeightNext()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorWeight += 1f;
-            ArmorWeight = this.CharacterSettings.FilterArmor[CurrentSlot].ArmorWeight.ToString();
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorWeight += 1f;
+            ArmorWeight = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorWeight.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteChargeDamagePrev()
         {
-            this.CharacterSettings.FilterMount.ChargeDamage -= 1f;
-            ChargeDamage = this.CharacterSettings.FilterMount.ChargeDamage.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).ChargeDamage -= 1f;
+            ChargeDamage = CharacterSettings.GetMountSettings(_isCivilian).ChargeDamage.ToString();
             this.RefreshValues();
         }
         public void ExecuteChargeDamageNext()
         {
-            this.CharacterSettings.FilterMount.ChargeDamage += 1f;
-            ChargeDamage = this.CharacterSettings.FilterMount.ChargeDamage.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).ChargeDamage += 1f;
+            ChargeDamage = CharacterSettings.GetMountSettings(_isCivilian).ChargeDamage.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteHitPointsPrev()
         {
-            this.CharacterSettings.FilterMount.HitPoints -= 1f;
-            HitPoints = this.CharacterSettings.FilterMount.HitPoints.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).HitPoints -= 1f;
+            HitPoints = CharacterSettings.GetMountSettings(_isCivilian).HitPoints.ToString();
             this.RefreshValues();
         }
         public void ExecuteHitPointsNext()
         {
-            this.CharacterSettings.FilterMount.HitPoints += 1f;
-            HitPoints = this.CharacterSettings.FilterMount.HitPoints.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).HitPoints += 1f;
+            HitPoints = CharacterSettings.GetMountSettings(_isCivilian).HitPoints.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteManeuverPrev()
         {
-            this.CharacterSettings.FilterMount.Maneuver -= 1f;
-            Maneuver = this.CharacterSettings.FilterMount.Maneuver.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).Maneuver -= 1f;
+            Maneuver = CharacterSettings.GetMountSettings(_isCivilian).Maneuver.ToString();
             this.RefreshValues();
         }
         public void ExecuteManeuverNext()
         {
-            this.CharacterSettings.FilterMount.Maneuver += 1f;
-            Maneuver = this.CharacterSettings.FilterMount.Maneuver.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).Maneuver += 1f;
+            Maneuver = CharacterSettings.GetMountSettings(_isCivilian).Maneuver.ToString();
             this.RefreshValues();
         }
 
         public void ExecuteSpeedPrev()
         {
-            this.CharacterSettings.FilterMount.Speed -= 1f;
-            Speed = this.CharacterSettings.FilterMount.Speed.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).Speed -= 1f;
+            Speed = CharacterSettings.GetMountSettings(_isCivilian).Speed.ToString();
             this.RefreshValues();
         }
         public void ExecuteSpeedNext()
         {
-            this.CharacterSettings.FilterMount.Speed += 1f;
-            Speed = this.CharacterSettings.FilterMount.Speed.ToString();
+            CharacterSettings.GetMountSettings(_isCivilian).Speed += 1f;
+            Speed = CharacterSettings.GetMountSettings(_isCivilian).Speed.ToString();
             this.RefreshValues();
         }
 
@@ -1575,39 +1603,41 @@ namespace EquipBestItem
 
         public void ExecuteMountClear()
         {
-            this.CharacterSettings.FilterMount.ChargeDamage = 1f;
-            this.CharacterSettings.FilterMount.HitPoints = 1f;
-            this.CharacterSettings.FilterMount.Maneuver = 1f;
-            this.CharacterSettings.FilterMount.Speed = 1f;
+            var mount = CharacterSettings.GetMountSettings(_isCivilian);
+            mount.ChargeDamage = 1f;
+            mount.HitPoints = 1f;
+            mount.Maneuver = 1f;
+            mount.Speed = 1f;
             this.RefreshValues();
         }
 
         public void ExecuteArmorClear()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmArmor = 1f;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorBodyArmor = 1f;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ChargeBonus = 1f;
-            this.CharacterSettings.FilterArmor[CurrentSlot].HeadArmor = 1f;
-            this.CharacterSettings.FilterArmor[CurrentSlot].LegArmor = 1f;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ManeuverBonus = 1f;
-            this.CharacterSettings.FilterArmor[CurrentSlot].SpeedBonus = 1f;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorWeight = 0;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmArmor = 1f;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorBodyArmor = 1f;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ChargeBonus = 1f;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).HeadArmor = 1f;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).LegArmor = 1f;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ManeuverBonus = 1f;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).SpeedBonus = 1f;
+            CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian).ArmorWeight = 0;
             this.RefreshValues();
         }
 
         public void ExecuteWeaponClear()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Accuracy = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponBodyArmor = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Handling = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MaxDataValue = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MissileSpeed = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingDamage = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingSpeed = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustDamage = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustSpeed = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponLength = 1f;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponWeight = 0;
+            var weapon = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian);
+            weapon.Accuracy = 1f;
+            weapon.WeaponBodyArmor = 1f;
+            weapon.Handling = 1f;
+            weapon.MaxDataValue = 1f;
+            weapon.MissileSpeed = 1f;
+            weapon.SwingDamage = 1f;
+            weapon.SwingSpeed = 1f;
+            weapon.ThrustDamage = 1f;
+            weapon.ThrustSpeed = 1f;
+            weapon.WeaponLength = 1f;
+            weapon.WeaponWeight = 0;
             this.RefreshValues();
         }
 
@@ -1629,39 +1659,42 @@ namespace EquipBestItem
 
         public void ExecuteMountLock()
         {
-            this.CharacterSettings.FilterMount.ChargeDamage = 0;
-            this.CharacterSettings.FilterMount.HitPoints = 0;
-            this.CharacterSettings.FilterMount.Maneuver = 0;
-            this.CharacterSettings.FilterMount.Speed = 0;
+            var mount = CharacterSettings.GetMountSettings(_isCivilian);
+            mount.ChargeDamage = 0;
+            mount.HitPoints = 0;
+            mount.Maneuver = 0;
+            mount.Speed = 0;
             this.RefreshValues();
         }
 
         public void ExecuteArmorLock()
         {
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmArmor = 0;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorBodyArmor = 0;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ChargeBonus = 0;
-            this.CharacterSettings.FilterArmor[CurrentSlot].HeadArmor = 0;
-            this.CharacterSettings.FilterArmor[CurrentSlot].LegArmor = 0;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ManeuverBonus = 0;
-            this.CharacterSettings.FilterArmor[CurrentSlot].SpeedBonus = 0;
-            this.CharacterSettings.FilterArmor[CurrentSlot].ArmorWeight = 0;
+            var armor = CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian);
+            armor.ArmArmor = 0;
+            armor.ArmorBodyArmor = 0;
+            armor.ChargeBonus = 0;
+            armor.HeadArmor = 0;
+            armor.LegArmor = 0;
+            armor.ManeuverBonus = 0;
+            armor.SpeedBonus = 0;
+            armor.ArmorWeight = 0;
             this.RefreshValues();
         }
 
         public void ExecuteWeaponLock()
         {
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Accuracy = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponBodyArmor = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].Handling = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MaxDataValue = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].MissileSpeed = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingDamage = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].SwingSpeed = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustDamage = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].ThrustSpeed = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponLength = 0;
-            this.CharacterSettings.FilterWeapon[CurrentSlot].WeaponWeight = 0;
+            var weapon = CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian);
+            weapon.Accuracy = 0;
+            weapon.WeaponBodyArmor = 0;
+            weapon.Handling = 0;
+            weapon.MaxDataValue = 0;
+            weapon.MissileSpeed = 0;
+            weapon.SwingDamage = 0;
+            weapon.SwingSpeed = 0;
+            weapon.ThrustDamage = 0;
+            weapon.ThrustSpeed = 0;
+            weapon.WeaponLength = 0;
+            weapon.WeaponWeight = 0;
             this.RefreshValues();
         }
 
@@ -1686,17 +1719,17 @@ namespace EquipBestItem
             switch (_filterItemState)
             {
                 case FilterItemState.Armor:
-                    _clipboardFilterArmorSettings = new FilterArmorSettings(CharacterSettings.FilterArmor[CurrentSlot]);
+                    _clipboardFilterArmorSettings = new FilterArmorSettings(CharacterSettings.GetArmorSettings((ArmorSlot) CurrentSlot, _isCivilian));
                     IsFilterArmorSettingsCopied = true;
                     InformationManager.DisplayMessage(new InformationMessage("Armor settings copied"));
                     break;
                 case FilterItemState.Weapon:
-                    _clipboardFilterWeaponSettings = new FilterWeaponSettings(CharacterSettings.FilterWeapon[CurrentSlot]);
+                    _clipboardFilterWeaponSettings = new FilterWeaponSettings(CharacterSettings.GetWeaponSettings((WeaponSlot) CurrentSlot, _isCivilian));
                     IsFilterWeaponSettingsCopied = true;
                     InformationManager.DisplayMessage(new InformationMessage("Weapon settings copied"));
                     break;
                 case FilterItemState.Mount:
-                    _clipboardFilterMountSettings = new FilterMountSettings(CharacterSettings.FilterMount);
+                    _clipboardFilterMountSettings = new FilterMountSettings(CharacterSettings.GetMountSettings(_isCivilian));
                     IsFilterMountSettingsCopied = true;
                     InformationManager.DisplayMessage(new InformationMessage("Mount settings copied"));
                     break;
@@ -1708,15 +1741,15 @@ namespace EquipBestItem
             switch (_filterItemState)
             {
                 case FilterItemState.Armor:
-                    CharacterSettings.FilterArmor[CurrentSlot] = new FilterArmorSettings(_clipboardFilterArmorSettings);
+                    CharacterSettings.SetArmorSettings(new FilterArmorSettings(_clipboardFilterArmorSettings), (ArmorSlot)CurrentSlot, _isCivilian);
                     InformationManager.DisplayMessage(new InformationMessage("Armor settings pasted"));
                     break;
                 case FilterItemState.Weapon:
-                    CharacterSettings.FilterWeapon[CurrentSlot] = new FilterWeaponSettings(_clipboardFilterWeaponSettings);
+                    CharacterSettings.SetWeaponSettings(new FilterWeaponSettings(_clipboardFilterWeaponSettings), (WeaponSlot)CurrentSlot, _isCivilian);
                     InformationManager.DisplayMessage(new InformationMessage("Weapon settings pasted"));
                     break;
                 case FilterItemState.Mount:
-                    CharacterSettings.FilterMount = new FilterMountSettings(_clipboardFilterMountSettings);
+                    CharacterSettings.SetMountSettings(new FilterMountSettings(_clipboardFilterMountSettings));
                     InformationManager.DisplayMessage(new InformationMessage("Mount settings pasted"));
                     break;
             }
@@ -1725,7 +1758,7 @@ namespace EquipBestItem
 
         public void ExecuteCopyCharacterSettings()
         {
-            _clipboardCharacterSettings = new CharacterSettings(CharacterSettings);
+            _clipboardCharacterSettings = new BetterCharacterSettings(CharacterSettings);
             IsCharacterSettingsCopied = true;
             InformationManager.DisplayMessage(new InformationMessage("Character settings copied"));
         }
@@ -1733,7 +1766,7 @@ namespace EquipBestItem
         public void ExecutePasteCharacterSettings()
         {
             var tempName = CharacterSettings.Name;
-            CharacterSettings = new CharacterSettings(_clipboardCharacterSettings);
+            CharacterSettings = new BetterCharacterSettings(_clipboardCharacterSettings);
             CharacterSettings.Name = tempName;
             _pastedCharacterSettings = true;
             InformationManager.DisplayMessage(new InformationMessage("Character settings pasted"));

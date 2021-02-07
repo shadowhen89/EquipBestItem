@@ -1,11 +1,14 @@
 ﻿using EquipBestItem.Layers;
 using SandBox.GauntletUI;
 using System;
+using System.Collections.Generic;
+using Bannerlord.ButterLib.SaveSystem.Extensions;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.ViewModelCollection;
 using TaleWorlds.Core;
 using TaleWorlds.Engine.Screens;
 using TaleWorlds.Library;
+using TaleWorlds.SaveSystem;
 
 namespace EquipBestItem
 {
@@ -21,6 +24,9 @@ namespace EquipBestItem
         private MainLayer _mainLayer;
         private FilterLayer _filterLayer;
 
+        [SaveableField(8)]
+        private List<BetterCharacterSettings> _characterSettingsStore;
+
         private void AddNewInventoryLayer(TutorialContextChangedEvent tutorialContextChangedEvent)
         {
             try
@@ -32,11 +38,11 @@ namespace EquipBestItem
                         _inventoryScreen = ScreenManager.TopScreen as InventoryGauntletScreen;
                         Inventory = _inventoryScreen.GetField("_dataSource") as SPInventoryVM;
 
-                        _mainLayer = new MainLayer(1000, "GauntletLayer");
+                        _mainLayer = new MainLayer(1000, _characterSettingsStore, "GauntletLayer");
                         _inventoryScreen.AddLayer(_mainLayer);
                         _mainLayer.InputRestrictions.SetInputRestrictions(true, InputUsageMask.All);
 
-                        _filterLayer = new FilterLayer(1001, "GauntletLayer");
+                        _filterLayer = new FilterLayer(1001, _characterSettingsStore, "GauntletLayer");
                         _inventoryScreen.AddLayer(_filterLayer);
                         _filterLayer.InputRestrictions.SetInputRestrictions(true, InputUsageMask.All);
                     }
@@ -66,8 +72,10 @@ namespace EquipBestItem
 
                         _inventoryScreen.RemoveLayer(this._mainLayer);
                         _mainLayer = null;
+                        
+                        // Temporary
                         SettingsLoader.Instance.SaveSettings();
-                        SettingsLoader.Instance.SaveCharacterSettings();
+                        //SettingsLoader.Instance.SaveCharacterSettings();
                     }
 
                     if (_inventoryScreen != null && _filterLayer != null)
@@ -85,7 +93,15 @@ namespace EquipBestItem
 
         public override void SyncData(IDataStore dataStore)
         {
+#if DEBUG
+            InformationManager.DisplayMessage(new InformationMessage("Synced Data...", new Color(0f, 1f, 0f)));
+#endif
+            dataStore.SyncDataAsJson("EquipBestItemData", ref _characterSettingsStore);
 
+            if (_characterSettingsStore == null)
+            {
+                _characterSettingsStore = new List<BetterCharacterSettings>();
+            }
         }
     }
 }

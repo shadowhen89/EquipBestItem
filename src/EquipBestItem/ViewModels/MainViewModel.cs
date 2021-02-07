@@ -1,4 +1,5 @@
-﻿using TaleWorlds.CampaignSystem;
+﻿using System.Collections.Generic;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.ViewModelCollection;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -13,6 +14,7 @@ namespace EquipBestItem
         private Equipment _bestRightEquipment;
 
         private BestEquipmentUpgrader bestEquipmentUpgrader;
+        private List<BetterCharacterSettings> _characterSettingsStore;
 
         #region DataSourcePropertys
 
@@ -224,12 +226,13 @@ namespace EquipBestItem
 
         #endregion DataSourcePropertys
 
-        public MainViewModel()
+        public MainViewModel(List<BetterCharacterSettings> characterSettingsStore)
         {
             _inventoryLogic = InventoryManager.InventoryLogic;
             _inventory = InventoryBehavior.Inventory;
+            _characterSettingsStore = characterSettingsStore;
 
-            bestEquipmentUpgrader = new BestEquipmentUpgrader();
+            bestEquipmentUpgrader = new BestEquipmentUpgrader(characterSettingsStore);
         }
 
         public override void RefreshValues()
@@ -246,7 +249,7 @@ namespace EquipBestItem
 
             // Create a character data based on given character name and character settings
             var character = GetCharacterByName(_inventory.CurrentCharacterName);
-            var characterSettings = SettingsLoader.Instance.GetCharacterSettingsByName(character.Name.ToString());
+            var characterSettings = BetterCharacterSettings.GetCharacterSettingsByName(_characterSettingsStore, character.Name.ToString());
             var characterData = new CharacterData(character, characterSettings);
 
             // Update the equipment upgrader with the newest character data

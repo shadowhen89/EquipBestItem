@@ -6,16 +6,10 @@ namespace EquipBestItem
     class CharacterData
     {
         private CharacterObject _characterObject;
-        private CharacterSettings _characterSettings;
+        private BetterCharacterSettings _characterSettings;
 
-        public CharacterData(CharacterObject characterObject)
-        {
-            _characterObject = characterObject;
-            _characterSettings = SettingsLoader.Instance.GetCharacterSettingsByName(characterObject.ToString());
 
-        }
-
-        public CharacterData(CharacterObject characterObject, CharacterSettings characterSettings)
+        public CharacterData(CharacterObject characterObject, BetterCharacterSettings characterSettings)
         {
             _characterObject = characterObject;
             _characterSettings = characterSettings;
@@ -27,7 +21,7 @@ namespace EquipBestItem
             return _characterObject;
         }
 
-        public CharacterSettings GetCharacterSettings()
+        public BetterCharacterSettings GetCharacterSettings()
         {
             return _characterSettings;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Helpers;
 
 using TaleWorlds.CampaignSystem;
@@ -15,9 +16,12 @@ namespace EquipBestItem
         private SPInventoryVM _inventory;
         private InventoryLogic _inventoryLogic;
 
-        public BestEquipmentUpgrader()
+        private List<BetterCharacterSettings> _characterSettingStore;
+
+        public BestEquipmentUpgrader(List<BetterCharacterSettings> characterSettingStore)
         {
             _characterData = null;
+            _characterSettingStore = characterSettingStore;
         }
 
         /// <summary>
@@ -148,7 +152,9 @@ namespace EquipBestItem
         /// <param name="character">hero</param>
         public void EquipCharacter(CharacterObject character)
         {
-            _characterData = new CharacterData(character, SettingsLoader.Instance.GetCharacterSettingsByName(character.Name.ToString()));
+            string characterName = character.Name.ToString();
+            BetterCharacterSettings characterSettings = BetterCharacterSettings.GetCharacterSettingsByName(_characterSettingStore, characterName);
+            _characterData = new CharacterData(character, characterSettings);
             Equipment characterEquipment = _inventory.IsInWarSet ? character.FirstBattleEquipment : character.FirstCivilianEquipment;
             EquipCharacterEquipment(characterEquipment, !_inventory.IsInWarSet);
         }
@@ -296,7 +302,7 @@ namespace EquipBestItem
                 return -9999f;
 
             float value = 0f;
-            CharacterSettings characterSettings = _characterData.GetCharacterSettings();
+            var characterSettings = _characterData.GetCharacterSettings();
 
             // Calculation for armor items
             if (sourceItem.Item.HasArmorComponent)
@@ -328,7 +334,7 @@ namespace EquipBestItem
         private float CalculateArmorValue(EquipmentElement sourceItem, EquipmentIndex slot)
         {
             ArmorComponent armorComponentItem = sourceItem.Item.ArmorComponent;
-            FilterArmorSettings filterArmor = _characterData.GetCharacterSettings().FilterArmor[GetEquipmentSlot(slot)];
+            FilterArmorSettings filterArmor = _characterData.GetCharacterSettings().GetArmorSettings((ArmorSlot)GetEquipmentSlot(slot), !_inventory.IsInWarSet);
 
             float sum =
                 Math.Abs(filterArmor.HeadArmor) +
@@ -393,7 +399,7 @@ namespace EquipBestItem
         private float CalculateWeaponValue(EquipmentElement sourceItem, EquipmentIndex slot)
         {
             WeaponComponentData primaryWeaponItem = sourceItem.Item.PrimaryWeapon;
-            FilterWeaponSettings filterWeapon = _characterData.GetCharacterSettings().FilterWeapon[GetEquipmentSlot(slot)];
+            FilterWeaponSettings filterWeapon = _characterData.GetCharacterSettings().GetWeaponSettings((WeaponSlot)GetEquipmentSlot(slot), !_inventory.IsInWarSet);
             float sum =
                 Math.Abs(filterWeapon.Accuracy) +
                 Math.Abs(filterWeapon.WeaponBodyArmor) +
@@ -447,7 +453,7 @@ namespace EquipBestItem
                 MaxDataValue = MaxDataValue < 0 ? 0 : MaxDataValue;
             }
 
-            var weights = _characterData.GetCharacterSettings().FilterWeapon[GetEquipmentSlot(slot)];
+            var weights = filterWeapon;
             float value = (
                 Accuracy * weights.Accuracy +
                 BodyArmor * weights.WeaponBodyArmor +
@@ -481,7 +487,7 @@ namespace EquipBestItem
         private float CalculateHorseValue(EquipmentElement sourceItem)
         {
             HorseComponent horseComponentItem = sourceItem.Item.HorseComponent;
-            FilterMountSettings filterMount = _characterData.GetCharacterSettings().FilterMount;
+            FilterMountSettings filterMount = _characterData.GetCharacterSettings().GetMountSettings(!_inventory.IsInWarSet);
 
             float sum =
                 Math.Abs(filterMount.ChargeDamage) +
@@ -502,7 +508,7 @@ namespace EquipBestItem
                 Speed = mod.ModifyMountSpeed(Speed);
             }
 
-            var weights = _characterData.GetCharacterSettings().FilterMount;
+            var weights = filterMount;
             float value = (
                 ChargeDamage * weights.ChargeDamage +
                 HitPoints * weights.HitPoints +

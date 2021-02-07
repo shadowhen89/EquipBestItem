@@ -6,20 +6,17 @@ namespace EquipBestItem
 {
     public class SubModule : MBSubModuleBase
     {
-        public override void OnMissionBehaviourInitialize(Mission mission)
-        {
-            base.OnMissionBehaviourInitialize(mission);
-        }
-
         protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
         {
             try
             {
                 base.OnGameStart(game, gameStarterObject);
+                
+                // Temporary
                 SettingsLoader.Instance.LoadSettings();
-                SettingsLoader.Instance.LoadCharacterSettings();
+                //SettingsLoader.Instance.LoadCharacterSettings();
 
-                AddBehaviours(gameStarterObject as CampaignGameStarter);
+                AddBehaviors(gameStarterObject as CampaignGameStarter);
             }
             catch (MBException e)
             {
@@ -27,19 +24,9 @@ namespace EquipBestItem
             }
         }
 
-        private void AddBehaviours(CampaignGameStarter gameStarterObject)
+        private void AddBehaviors(CampaignGameStarter gameStarterObject)
         {
-            try
-            {
-                if (gameStarterObject != null)
-                {
-                    gameStarterObject.AddBehavior(new InventoryBehavior());
-                }
-            }
-            catch
-            {
-                throw;
-            }
+            gameStarterObject?.AddBehavior(new InventoryBehavior());
         }
     }
 }

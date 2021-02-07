@@ -1,4 +1,5 @@
-﻿using TaleWorlds.Engine.GauntletUI;
+﻿using System.Collections.Generic;
+using TaleWorlds.Engine.GauntletUI;
 
 namespace EquipBestItem
 {
@@ -9,9 +10,9 @@ namespace EquipBestItem
         private bool _firstRefresh = false;
         private bool _leftMouseButtonWasReleased = false;
 
-        public MainLayer(int localOrder, string categoryId = "GauntletLayer") : base(localOrder, categoryId)
+        public MainLayer(int localOrder, List<BetterCharacterSettings> characterSettings, string categoryId = "GauntletLayer") : base(localOrder, categoryId)
         {
-            _viewModel = new MainViewModel();
+            _viewModel = new MainViewModel(characterSettings);
             this.LoadMovie("EBIInventory", _viewModel);
         }
 
